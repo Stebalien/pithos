@@ -28,6 +28,7 @@ import json
 import logging
 import time
 import urllib.request, urllib.parse, urllib.error
+import ssl
 import codecs
 
 HTTP_TIMEOUT = 30
@@ -50,6 +51,19 @@ API_ERROR_PLAYLIST_EXCEEDED = 1039
 PLAYLIST_VALIDITY_TIME = 60*60*3
 
 NAME_COMPARE_REGEX = re.compile(r'[^A-Za-z0-9]')
+
+# Issue: #251
+CA_ROOT = """
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmdacYvAV9IGaQQhZjxOd
+F8mfUdzasVLv/+NB3eDfxCjG4615HycQmLi7IJfBKERBD+qpqFLPTU4bi7u1xHbZ
+zFYG7rNVICreFY1xy1TIbxfNiQDk3P/hwB9ocenHKS5+vDv85burJlSLZpDN9pK5
+MSSAvJ5s1fx+0uFLjNxC+kRLX/gYtS4w9D0SmNNiBXNUppyiHb5SgzoHRsQ7AlYh
+v/JRT9CmmTnprqU/iZucff5NYAclIPe712mDK4KTQzfZg0EbawurSmaET0qO3n40
+mY5o1so5BptMs5pITRNGtFghBMT7oE2sLktiEuP7TfbJUQABH/weaoEqOOC5T9Yt
+RQIDAQAB
+-----END PUBLIC KEY-----
+"""
 
 class PandoraError(IOError):
     def __init__(self, message, status=None, submsg=None):
@@ -78,7 +92,8 @@ class Pandora:
     - :py:meth:`json_call` call into the JSON API directly
     """
     def __init__(self):
-        self.opener = urllib.request.build_opener()
+        ctx = ssl.create_default_context(cadata=CA_ROOT)
+        self.opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx))
         pass
 
     def pandora_encrypt(self, s):
